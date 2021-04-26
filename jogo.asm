@@ -28,7 +28,10 @@
 
 .data?
     hBmp  dd  ?
+<<<<<<< HEAD
     hEventStart HANDLE ?
+=======
+>>>>>>> 66e03bd254e654b63eba6ffe8cd9efb9072bc98a
 ; _______________________________________________CODE______________________________________________
 .code
 start:
@@ -45,6 +48,7 @@ start:
 
     ; PROCEDURES________________________________
 
+<<<<<<< HEAD
     ;______________________________________________________________________________
 
     updateScreen proc
@@ -53,6 +57,16 @@ start:
     updateScreen endp
 
     ;______________________________________________________________________________
+=======
+;______________________________________________________________________________
+
+updateScreen proc
+    
+    ret
+updateScreen endp
+
+;______________________________________________________________________________
+>>>>>>> 66e03bd254e654b63eba6ffe8cd9efb9072bc98a
 
 
     WinMain proc hInst     :DWORD,
@@ -140,6 +154,7 @@ start:
         LOCAL hWin2  :DWORD
     
         ; quando esta criando
+<<<<<<< HEAD
         .if uMsg == WM_CREATE
             invoke  CreateEvent, NULL, FALSE, FALSE, NULL
             mov     hEventStart, eax
@@ -164,7 +179,32 @@ start:
             invoke EndPaint,hWin,ADDR Ps
         .endif
 
+=======
+>>>>>>> 66e03bd254e654b63eba6ffe8cd9efb9072bc98a
         invoke DefWindowProc,hWin,uMsg,wParam,lParam 
+
+        ;.if uMsg == WM_CREATE
+        
+
+        .if uMsg == WM_CREATE
+            invoke BeginPaint,hWin,ADDR Ps                                
+            mov    hDC, eax
+
+            invoke CreateCompatibleDC, hDC
+            mov   memDC, eax
+
+            invoke SelectObject, memDC, hBmp
+            mov  hOld, eax  
+
+            invoke BitBlt, hDC, 10, 100,166,68, memDC, 0,0, SRCCOPY
+
+
+            invoke SelectObject,hDC,hOld
+            invoke DeleteDC,memDC  
+
+
+            invoke EndPaint,hWin,ADDR Ps
+        .endif
         ret
 
     WndProc endp
