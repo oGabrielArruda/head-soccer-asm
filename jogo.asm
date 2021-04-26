@@ -15,6 +15,9 @@
         lbl:
     ENDM
      
+.const
+    background equ 100
+
 .data
     szDisplayName db "Cotuca Soccer",0
     AppName db "Cotuca Soccer", 0
@@ -23,12 +26,8 @@
     hInstance     dd 0
     buffer        db 256 dup(?)
 
-
-    ;Background bitmap:
-    background        dd 0
-
 .data?
-
+    hBmp  dd  ?
 ; _______________________________________________CODE______________________________________________
 .code
 start:
@@ -36,22 +35,24 @@ start:
     invoke GetModuleHandle, NULL ; provides the instance handle
     mov    hInstance, eax
 
+    invoke LoadBitmap, hInstance, background
+    mov    hBmp, eax
+
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT    
     invoke ExitProcess,eax   
     ; comentario do sergio -> coloco aqui o procedimento WinMain para criação da janela em si
 
     ; PROCEDURES________________________________
 
-    ; carrega as imagens
-    loadImages proc  
+;______________________________________________________________________________
 
-        invoke LoadBitmap, hInstance, 100
-        mov background, eax
+updateScreen proc
+    
+    ret
+updateScreen endp
 
-        ret
+;______________________________________________________________________________
 
-    loadImages endp
-    ; __________________________________________
 
     WinMain proc hInst     :DWORD,
                 hPrevInst :DWORD,
@@ -91,24 +92,7 @@ start:
 
         invoke RegisterClassEx, ADDR wc     ; register the window class
 
-        ;================================
-        ; Centre window at following size
-        ;================================
 
-        ; mov Wwd, 500
-        ; mov Wht, 350
-
-        ; invoke GetSystemMetrics,SM_CXSCREEN ; get screen width in pixels
-        ; invoke TopXY,Wwd,eax
-        ; mov Wtx, eax
-
-        ; invoke GetSystemMetrics,SM_CYSCREEN ; get screen height in pixels
-        ; invoke TopXY,Wht,eax
-        ; mov Wty, eax
-
-        ; ==================================
-        ; Create the main application window
-        ; ==================================
         invoke CreateWindowEx,WS_EX_OVERLAPPEDWINDOW, \
                             ADDR szClassName, \
                             ADDR szDisplayName,\
@@ -149,15 +133,36 @@ start:
                 lParam :DWORD
 
         LOCAL hDC    :DWORD
+        LOCAL memDC  :DWORD
+        LOCAL hOld   :DWORD
         LOCAL Ps     :PAINTSTRUCT
         LOCAL hWin2  :DWORD
     
         ; quando esta criando
-        ;if uMsg == WM_CREATE
-            invoke loadImages
-                        
-
         invoke DefWindowProc,hWin,uMsg,wParam,lParam 
+
+        ;.if uMsg == WM_CREATE
+        
+
+        .if uMsg == WM_CREATE
+            invoke BeginPaint,hWin,ADDR Ps                                
+            mov    hDC, eax
+
+            invoke CreateCompatibleDC, hDC
+            mov   memDC, eax
+
+            invoke SelectObject, memDC, hBmp
+            mov  hOld, eax  
+
+            invoke BitBlt, hDC, 10, 100,166,68, memDC, 0,0, SRCCOPY
+
+
+            invoke SelectObject,hDC,hOld
+            invoke DeleteDC,memDC  
+
+
+            invoke EndPaint,hWin,ADDR Ps
+        .endif
         ret
 
     WndProc endp
