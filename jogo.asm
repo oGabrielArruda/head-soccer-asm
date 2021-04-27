@@ -17,7 +17,9 @@
      
 .const
     background equ 100
-
+    player1_img equ 200
+    CREF_TRANSPARENT  EQU 0FF00FFh
+  	CREF_TRANSPARENT2 EQU 0FF0000h
 .data
     szDisplayName db "Cotuca Soccer",0
     AppName db "Cotuca Soccer", 0
@@ -28,6 +30,8 @@
 
 .data?
     hBmp  dd  ?
+    hBmp2  dd  ?
+    hEventStart HANDLE ?
 ; _______________________________________________CODE______________________________________________
 .code
 start:
@@ -38,20 +42,23 @@ start:
     invoke LoadBitmap, hInstance, background
     mov    hBmp, eax
 
+    invoke LoadBitmap, hInstance, player1_img
+    mov hBmp2, eax
+
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT    
     invoke ExitProcess,eax   
     ; comentario do sergio -> coloco aqui o procedimento WinMain para criação da janela em si
 
     ; PROCEDURES________________________________
 
-;______________________________________________________________________________
+    ;______________________________________________________________________________
 
-updateScreen proc
-    
-    ret
-updateScreen endp
+    updateScreen proc
+        
+        ret
+    updateScreen endp
 
-;______________________________________________________________________________
+    ;______________________________________________________________________________
 
 
     WinMain proc hInst     :DWORD,
@@ -98,7 +105,7 @@ updateScreen endp
                             ADDR szDisplayName,\
                             WS_OVERLAPPEDWINDOW,\
                             ;Wtx,Wty,Wwd,Wht,
-                            CW_USEDEFAULT,CW_USEDEFAULT, 900, 522, \      ;tamanho da janela
+                            CW_USEDEFAULT,CW_USEDEFAULT, 910, 552, \      ;tamanho da janela
                             NULL,NULL,\
                             hInst,NULL
 
@@ -134,17 +141,17 @@ updateScreen endp
 
         LOCAL hDC    :DWORD
         LOCAL memDC  :DWORD
+        LOCAL memDCp1 : DWORD
         LOCAL hOld   :DWORD
         LOCAL Ps     :PAINTSTRUCT
         LOCAL hWin2  :DWORD
     
         ; quando esta criando
-        invoke DefWindowProc,hWin,uMsg,wParam,lParam 
-
-        ;.if uMsg == WM_CREATE
-        
-
         .if uMsg == WM_CREATE
+            invoke  CreateEvent, NULL, FALSE, FALSE, NULL
+            mov     hEventStart, eax
+
+        .elseif uMsg == WM_PAINT
             invoke BeginPaint,hWin,ADDR Ps                                
             mov    hDC, eax
 
@@ -154,7 +161,14 @@ updateScreen endp
             invoke SelectObject, memDC, hBmp
             mov  hOld, eax  
 
-            invoke BitBlt, hDC, 10, 100,166,68, memDC, 0,0, SRCCOPY
+            invoke BitBlt, hDC, 0, 0,900,522, memDC, 0,0, SRCCOPY
+
+
+            ; FUNCIONA ERRADO
+            invoke SelectObject, memDC, hBmp2
+            mov  hOld, eax  
+
+            invoke TransparentBlt, hDC, 20, 20,90,90, memDC, 0,256,32,32, CREF_TRANSPARENT
 
 
             invoke SelectObject,hDC,hOld
@@ -163,8 +177,11 @@ updateScreen endp
 
             invoke EndPaint,hWin,ADDR Ps
         .endif
+
+        invoke DefWindowProc,hWin,uMsg,wParam,lParam 
         ret
 
     WndProc endp
+
 
 end start
