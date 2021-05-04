@@ -57,4 +57,4 @@ player ends
     D_TOP_RIGHT   EQU 7
 
 .data
-    player1 player <<<100,350>,  <0,0>>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0>
+    player1 player <<<100,420>,  <0,0>>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0>

@@ -135,9 +135,10 @@ start:
     screenUpdate endp
 
     paintThread proc p:DWORD
-        invoke Sleep, 17 ; 60 FPS
-        invoke InvalidateRect, hWnd, NULL, FALSE
-
+        .WHILE GAMESTATE == 2
+            invoke Sleep, 17 ; 60 FPS
+            invoke InvalidateRect, hWnd, NULL, FALSE
+        .endw
         ret
     paintThread endp   
 
@@ -167,9 +168,9 @@ start:
             .if direction == 0 ; w
                 mov [eax].playerObj.speed.y, -PLAYER_SPEED
                 mov [eax].stopped, 0
-            .elseif direction == 1 ; s
-                mov [eax].playerObj.speed.y, PLAYER_SPEED
-                mov [eax].stopped, 0
+            ;.elseif direction == 1 ; s
+            ;    mov [eax].playerObj.speed.y, PLAYER_SPEED
+            ;    mov [eax].stopped, 0
             .elseif direction == 2 ; a
                 mov [eax].playerObj.speed.x, -PLAYER_SPEED
                 mov [eax].stopped, 0
@@ -329,7 +330,7 @@ start:
         ; Quando a tecla sobe
         .elseif uMsg == WM_KEYUP
             ; PLAYER 1
-            .if (wParam == 77h || wParam == 57h) ;w
+            .if (wParam == 77h || wParam == 57h || wParam == 20h) ;w
                 mov keydown, FALSE
                 mov direction, 0
 
@@ -337,9 +338,9 @@ start:
                 mov keydown, FALSE
                 mov direction, 1
 
-            .elseif (wParam == 73h || wParam == 53h) ;s
-                mov keydown, FALSE
-                mov direction, 2
+            ;.elseif (wParam == 73h || wParam == 53h) ;s
+            ;    mov keydown, FALSE
+            ;    mov direction, 2
 
             .elseif (wParam == 64h || wParam == 44h) ;d
                 mov keydown, FALSE
@@ -354,13 +355,13 @@ start:
             
         ;quando a tecla desce
         .elseif uMsg == WM_KEYDOWN
-            .if (wParam == 57h) ; w
+            .if (wParam == 57h || wParam == 20h) ; w
                 mov keydown, TRUE
                 mov direction, 0
 
-            .elseif (wParam == 53h) ; s
-                mov keydown, TRUE
-                mov direction, 1
+            ;.elseif (wParam == 53h) ; s
+            ;    mov keydown, TRUE
+            ;    mov direction, 1
 
             .elseif (wParam == 41h) ; a
                 mov keydown, TRUE
