@@ -17,21 +17,29 @@
      
 .const
     background equ 100
-    player1_img equ 200
+    p1 equ 101
     CREF_TRANSPARENT  EQU 0FF00FFh
   	CREF_TRANSPARENT2 EQU 0FF0000h
+    PLAYER_SPEED  EQU  6
+
 .data
     szDisplayName db "Cotuca Soccer",0
     AppName db "Cotuca Soccer", 0
     CommandLine   dd 0
-    hWnd          dd 0
-    hInstance     dd 0
     buffer        db 256 dup(?)
 
+    hBmp          dd    0
+    p1_spritesheet    dd 0
+    paintstruct   PAINTSTRUCT <>
+    GAMESTATE             BYTE 2
+
 .data?
-    hBmp  dd  ?
-    hBmp2  dd  ?
-    hEventStart HANDLE ?
+    hInstance HINSTANCE ?
+
+    hWnd HWND ?
+    thread1ID DWORD ?
+    thread2ID DWORD ?
+    
 ; _______________________________________________CODE______________________________________________
 .code
 start:
@@ -42,8 +50,8 @@ start:
     invoke LoadBitmap, hInstance, background
     mov    hBmp, eax
 
-    invoke LoadBitmap, hInstance, player1_img
-    mov hBmp2, eax
+    invoke LoadBitmap, hInstance, p1
+    mov     p1_spritesheet, eax
 
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT    
     invoke ExitProcess,eax   
@@ -51,13 +59,164 @@ start:
 
     ; PROCEDURES________________________________
 
-    ;______________________________________________________________________________
+    isStopped proc addrPlayer:dword
+        assume edx:ptr player
+        mov edx, addrPlayer
 
-    updateScreen proc
-        
+        .if [edx].playerObj.speed.x == 0  && [edx].playerObj.speed.y == 0
+            mov [edx].stopped, 1
+        .endif
+
         ret
-    updateScreen endp
+    isStopped endp
 
+    paintBackground proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
+    
+        invoke SelectObject, _hMemDC2, hBmp
+        invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY
+
+        ret
+    paintBackground endp
+
+    paintPlayers proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
+
+        invoke SelectObject, _hMemDC2, p1_spritesheet
+
+        movsx eax, player1.direction
+        mov ebx, PLAYER_SIZE
+        mul ebx
+        mov ecx, eax
+
+        invoke isStopped, addr player1
+
+        mov edx, 0
+
+        mov eax, player1.playerObj.pos.x
+        mov ebx, player1.playerObj.pos.y
+        sub eax, PLAYER_HALF_SIZE
+        sub ebx, PLAYER_HALF_SIZE
+
+        ;invoke BitBlt, _hdc, eax, ebx, PLAYER_SIZE, PLAYER_SIZE, _hMemDC, edx, ecx, SRCCOPY 
+        invoke TransparentBlt, _hMemDC, eax, ebx,\
+            PLAYER_SIZE, PLAYER_SIZE, _hMemDC2,\
+            edx, ecx, PLAYER_SIZE, PLAYER_SIZE, 16777215
+
+        ret
+    paintPlayers endp
+
+    screenUpdate proc
+        LOCAL hMemDC:HDC
+        LOCAL hMemDC2:HDC
+        LOCAL hBitmap:HDC
+        LOCAL hDC:HDC
+
+        invoke BeginPaint, hWnd, ADDR paintstruct
+        mov hDC, eax
+        invoke CreateCompatibleDC, hDC
+        mov hMemDC, eax
+        invoke CreateCompatibleDC, hDC ; for double buffering
+        mov hMemDC2, eax
+        invoke CreateCompatibleBitmap, hDC, 910, 522
+        mov hBitmap, eax
+
+        invoke SelectObject, hMemDC, hBitmap
+
+        invoke paintBackground, hDC, hMemDC, hMemDC2
+
+        invoke paintPlayers, hDC, hMemDC, hMemDC2
+
+        invoke BitBlt, hDC, 0, 0, 910, 522, hMemDC, 0, 0, SRCCOPY
+
+        invoke DeleteDC, hMemDC
+        invoke DeleteDC, hMemDC2
+        invoke DeleteObject, hBitmap
+        invoke EndPaint, hWnd, ADDR paintstruct
+        ret
+    screenUpdate endp
+
+    paintThread proc p:DWORD
+        invoke Sleep, 17 ; 60 FPS
+        invoke InvalidateRect, hWnd, NULL, FALSE
+
+        ret
+    paintThread endp   
+
+    changePlayerSpeed proc uses eax addrPlayer : DWORD, direction : BYTE, keydown : BYTE
+        assume eax: ptr player
+        mov eax, addrPlayer
+
+        .if keydown == FALSE
+            .if direction == 0 ;w
+                .if [eax].playerObj.speed.y > 7fh
+                    mov [eax].playerObj.speed.y, 0 
+                .endif
+            .elseif direction == 1 ;a
+                .if [eax].playerObj.speed.x > 7fh
+                    mov [eax].playerObj.speed.x, 0 
+                .endif
+            .elseif direction == 2 ;s
+                .if [eax].playerObj.speed.y < 80h
+                    mov [eax].playerObj.speed.y, 0 
+                .endif
+            .elseif direction == 3 ;d
+                .if [eax].playerObj.speed.x < 80h
+                    mov [eax].playerObj.speed.x, 0 
+                .endif
+            .endif
+        .else
+            .if direction == 0 ; w
+                mov [eax].playerObj.speed.y, -PLAYER_SPEED
+                mov [eax].stopped, 0
+            .elseif direction == 1 ; s
+                mov [eax].playerObj.speed.y, PLAYER_SPEED
+                mov [eax].stopped, 0
+            .elseif direction == 2 ; a
+                mov [eax].playerObj.speed.x, -PLAYER_SPEED
+                mov [eax].stopped, 0
+            .elseif direction == 3 ; d
+                mov [eax].playerObj.speed.x, PLAYER_SPEED
+                mov [eax].stopped, 0
+            .endif
+        .endif
+
+        assume ecx: nothing
+        ret
+    changePlayerSpeed endp
+
+    movePlayer proc uses eax addrPlayer:dword
+        assume ecx:ptr gameObject
+        mov ecx, addrPlayer
+
+        ; X AXIS ______________
+        mov eax, [ecx].pos.x
+        mov ebx, [ecx].speed.x
+        add eax, ebx
+        mov [ecx].pos.x, eax
+
+        ; Y AXIS ______________
+        mov eax, [ecx].pos.y
+        mov ebx, [ecx].speed.y
+        add ax, bx
+        mov [ecx].pos.y, eax
+
+        assume ecx:nothing
+        ret
+    movePlayer endp
+
+    gameManager proc p:dword
+        LOCAL area:RECT
+
+        game:
+            .while GAMESTATE == 2
+                invoke Sleep, 30
+                invoke movePlayer, addr player1
+            .endw
+
+        jmp game
+
+        ret
+    gameManager endp
+        
     ;______________________________________________________________________________
 
 
@@ -143,45 +302,86 @@ start:
         LOCAL memDC  :DWORD
         LOCAL memDCp1 : DWORD
         LOCAL hOld   :DWORD
-        LOCAL Ps     :PAINTSTRUCT
         LOCAL hWin2  :DWORD
+        LOCAL direction : BYTE
+        LOCAL keydown   : BYTE
+        mov direction, -1
+        mov keydown, -1
+
+        
     
         ; quando esta criando
         .if uMsg == WM_CREATE
-            invoke  CreateEvent, NULL, FALSE, FALSE, NULL
-            mov     hEventStart, eax
+            mov eax, offset gameManager 
+            invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread1ID 
+            invoke CloseHandle, eax 
+
+            mov eax, offset paintThread 
+            invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread2ID 
+            invoke CloseHandle, eax 
 
         .elseif uMsg == WM_PAINT
-            invoke BeginPaint,hWin,ADDR Ps                                
-            mov    hDC, eax
+            invoke screenUpdate
 
-            invoke CreateCompatibleDC, hDC
-            mov   memDC, eax
+        .elseif uMsg == WM_DESTROY                                        ; if the user closes our window 
+            invoke PostQuitMessage,NULL                                   ; quit our application 
 
-            invoke SelectObject, memDC, hBmp
-            mov  hOld, eax  
+        ; Quando a tecla sobe
+        .elseif uMsg == WM_KEYUP
+            ; PLAYER 1
+            .if (wParam == 77h || wParam == 57h) ;w
+                mov keydown, FALSE
+                mov direction, 0
 
-            invoke BitBlt, hDC, 0, 0,900,522, memDC, 0,0, SRCCOPY
+            .elseif (wParam == 61h || wParam == 41h) ;a
+                mov keydown, FALSE
+                mov direction, 1
 
+            .elseif (wParam == 73h || wParam == 53h) ;s
+                mov keydown, FALSE
+                mov direction, 2
 
-            ; FUNCIONA ERRADO
-            invoke SelectObject, memDC, hBmp2
-            mov  hOld, eax  
+            .elseif (wParam == 64h || wParam == 44h) ;d
+                mov keydown, FALSE
+                mov direction, 3
+            .endif
 
-            invoke TransparentBlt, hDC, 20, 20,90,90, memDC, 0,256,32,32, CREF_TRANSPARENT
+            .if direction != -1
+                invoke changePlayerSpeed, ADDR player1, direction, keydown
+                mov direction, -1
+                mov keydown, -1
+            .endif
+            
+        ;quando a tecla desce
+        .elseif uMsg == WM_KEYDOWN
+            .if (wParam == 57h) ; w
+                mov keydown, TRUE
+                mov direction, 0
 
+            .elseif (wParam == 53h) ; s
+                mov keydown, TRUE
+                mov direction, 1
 
-            invoke SelectObject,hDC,hOld
-            invoke DeleteDC,memDC  
+            .elseif (wParam == 41h) ; a
+                mov keydown, TRUE
+                mov direction, 2
 
+            .elseif (wParam == 44h) ; d
+                mov keydown, TRUE
+                mov direction, 3
+            .endif
 
-            invoke EndPaint,hWin,ADDR Ps
+            .if direction != -1
+                invoke changePlayerSpeed, ADDR player1, direction, keydown
+                mov direction, -1
+                mov keydown, -1
+            .endif
+
+        .else
+            invoke DefWindowProc,hWin,uMsg,wParam,lParam 
         .endif
-
-        invoke DefWindowProc,hWin,uMsg,wParam,lParam 
         ret
 
     WndProc endp
-
 
 end start
