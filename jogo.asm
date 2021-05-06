@@ -21,6 +21,7 @@
     CREF_TRANSPARENT  EQU 0FF00FFh
   	CREF_TRANSPARENT2 EQU 0FF0000h
     PLAYER_SPEED  EQU  6
+    JUMP_SPEED EQU 20
 
 .data
     szDisplayName db "Cotuca Soccer",0
@@ -39,6 +40,7 @@
     hWnd HWND ?
     thread1ID DWORD ?
     thread2ID DWORD ?
+    threadJUMP DWORD ?
     
 ; _______________________________________________CODE______________________________________________
 .code
@@ -142,16 +144,13 @@ start:
         ret
     paintThread endp   
 
+
     changePlayerSpeed proc uses eax addrPlayer : DWORD, direction : BYTE, keydown : BYTE
         assume eax: ptr player
         mov eax, addrPlayer
 
         .if keydown == FALSE
-            .if direction == 0 ;w
-                .if [eax].playerObj.speed.y > 7fh
-                    mov [eax].playerObj.speed.y, 0 
-                .endif
-            .elseif direction == 1 ;a
+            .if direction == 1 ;a
                 .if [eax].playerObj.speed.x > 7fh
                     mov [eax].playerObj.speed.x, 0 
                 .endif
@@ -166,8 +165,11 @@ start:
             .endif
         .else
             .if direction == 0 ; w
-                mov [eax].playerObj.speed.y, -PLAYER_SPEED
-                mov [eax].stopped, 0
+                .if [eax].jumping == 0  ; se o player não está pulando
+                    mov [eax].jumping, 1
+                    mov [eax].playerObj.speed.y, -JUMP_SPEED ; setamos a velocidade do player para o pulo
+                    mov [eax].stopped, 0                      
+                .endif
             ;.elseif direction == 1 ; s
             ;    mov [eax].playerObj.speed.y, PLAYER_SPEED
             ;    mov [eax].stopped, 0
@@ -185,8 +187,25 @@ start:
     changePlayerSpeed endp
 
     movePlayer proc uses eax addrPlayer:dword
+        assume edx:ptr player
+        mov edx, addrPlayer
+
         assume ecx:ptr gameObject
         mov ecx, addrPlayer
+
+
+
+        .if [ecx].pos.y < 420       ; se o player está pulando
+            mov ebx, [ecx].speed.y
+            inc ebx
+            mov [ecx].speed.y, ebx
+        .endif
+        ;.endif 
+
+
+
+
+
 
         ; X AXIS ______________
         mov eax, [ecx].pos.x
@@ -198,6 +217,13 @@ start:
         mov eax, [ecx].pos.y
         mov ebx, [ecx].speed.y
         add ax, bx
+
+        ; se o player está voltando de um pulo, e iria "para baixo" do chão
+        .if eax >= 420
+            mov [edx].jumping, 0 ; avisamos que ele não está mais pulando
+            mov eax, 420         ; o colocamos no chão
+        .endif
+
         mov [ecx].pos.y, eax
 
         assume ecx:nothing
@@ -332,7 +358,7 @@ start:
             ; PLAYER 1
             .if (wParam == 77h || wParam == 57h || wParam == 20h) ;w
                 mov keydown, FALSE
-                mov direction, 0
+                mov direction, 0                
 
             .elseif (wParam == 61h || wParam == 41h) ;a
                 mov keydown, FALSE

@@ -34,6 +34,7 @@ gameObject ends
 player struct
     playerObj       gameObject <>
     stopped               BYTE 0
+    jumping               BYTE 0
     cooldownDash          BYTE 0
     life                  BYTE 4
     direction             BYTE 0
