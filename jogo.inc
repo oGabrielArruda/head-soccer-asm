@@ -59,3 +59,4 @@ player ends
 
 .data
     player1 player <<<100,420>,  <0,0>>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0>
+    player2 player <<<700,420>,  <0,0>>, 0, 0, 4, D_LEFT, 0, 0, 0, 0>

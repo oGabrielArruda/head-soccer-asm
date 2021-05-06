@@ -81,7 +81,9 @@ start:
     paintBackground endp
 
     paintPlayers proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
-
+        ; ____________________________________________________________________________________________________
+        ; -----------------------------       PLAYER 1      --------------------------------------------------
+        ; ____________________________________________________________________________________________________
         invoke SelectObject, _hMemDC2, p1_spritesheet
 
         movsx eax, player1.direction
@@ -98,7 +100,32 @@ start:
         sub eax, PLAYER_HALF_SIZE
         sub ebx, PLAYER_HALF_SIZE
 
-        ;invoke BitBlt, _hdc, eax, ebx, PLAYER_SIZE, PLAYER_SIZE, _hMemDC, edx, ecx, SRCCOPY 
+        invoke TransparentBlt, _hMemDC, eax, ebx,\
+            PLAYER_SIZE, PLAYER_SIZE, _hMemDC2,\
+            edx, ecx, PLAYER_SIZE, PLAYER_SIZE, 16777215
+
+
+        ; ____________________________________________________________________________________________________
+        ; -----------------------------       PLAYER 2      --------------------------------------------------
+        ; ____________________________________________________________________________________________________
+
+
+        invoke SelectObject, _hMemDC2, p1_spritesheet
+
+        movsx eax, player2.direction
+        mov ebx, PLAYER_SIZE
+        mul ebx
+        mov ecx, eax
+
+        invoke isStopped, addr player2
+
+        mov edx, 0
+
+        mov eax, player2.playerObj.pos.x
+        mov ebx, player2.playerObj.pos.y
+        sub eax, PLAYER_HALF_SIZE
+        sub ebx, PLAYER_HALF_SIZE
+
         invoke TransparentBlt, _hMemDC, eax, ebx,\
             PLAYER_SIZE, PLAYER_SIZE, _hMemDC2,\
             edx, ecx, PLAYER_SIZE, PLAYER_SIZE, 16777215
@@ -200,10 +227,6 @@ start:
             inc ebx
             mov [ecx].speed.y, ebx
         .endif
-        ;.endif 
-
-
-
 
 
 
@@ -242,6 +265,7 @@ start:
             .while GAMESTATE == 2
                 invoke Sleep, 30
                 invoke movePlayer, addr player1
+                invoke movePlayer, addr player2
             .endw
 
         jmp game
@@ -360,7 +384,10 @@ start:
 
         ; Quando a tecla sobe
         .elseif uMsg == WM_KEYUP
-            ; PLAYER 1
+
+            ; ____________________________________________________________________________________________________
+            ; -----------------------------       PLAYER 1         -----------------------------------------------
+            ; ____________________________________________________________________________________________________
             .if (wParam == 77h || wParam == 57h || wParam == 20h) ;w
                 mov keydown, FALSE
                 mov direction, 0                
@@ -368,10 +395,6 @@ start:
             .elseif (wParam == 61h || wParam == 41h) ;a
                 mov keydown, FALSE
                 mov direction, 1
-
-            ;.elseif (wParam == 73h || wParam == 53h) ;s
-            ;    mov keydown, FALSE
-            ;    mov direction, 2
 
             .elseif (wParam == 64h || wParam == 44h) ;d
                 mov keydown, FALSE
@@ -383,16 +406,40 @@ start:
                 mov direction, -1
                 mov keydown, -1
             .endif
+
+
+            ; ____________________________________________________________________________________________________
+            ; -----------------------------       PLAYER 2         -----------------------------------------------
+            ; ____________________________________________________________________________________________________
+
+            .if (wParam == VK_UP) ;w
+                mov keydown, FALSE
+                mov direction, 0                
+
+            .elseif (wParam == VK_LEFT) ;a
+                mov keydown, FALSE
+                mov direction, 1
+
+            .elseif (wParam == VK_RIGHT) ;d
+                mov keydown, FALSE
+                mov direction, 3
+            .endif
+
+            .if direction != -1
+                invoke changePlayerSpeed, ADDR player2, direction, keydown
+                mov direction, -1
+                mov keydown, -1
+            .endif            
             
         ;quando a tecla desce
         .elseif uMsg == WM_KEYDOWN
+            ; ____________________________________________________________________________________________________
+            ; -----------------------------       PLAYER 1         -----------------------------------------------
+            ; ____________________________________________________________________________________________________
+
             .if (wParam == 57h || wParam == 20h) ; w
                 mov keydown, TRUE
                 mov direction, 0
-
-            ;.elseif (wParam == 53h) ; s
-            ;    mov keydown, TRUE
-            ;    mov direction, 1
 
             .elseif (wParam == 41h) ; a
                 mov keydown, TRUE
@@ -405,6 +452,32 @@ start:
 
             .if direction != -1
                 invoke changePlayerSpeed, ADDR player1, direction, keydown
+                mov direction, -1
+                mov keydown, -1
+            .endif
+
+
+
+            ; ____________________________________________________________________________________________________
+            ; -----------------------------       PLAYER 2         -----------------------------------------------
+            ; ____________________________________________________________________________________________________
+
+
+            .if (wParam == VK_UP) ; w
+                mov keydown, TRUE
+                mov direction, 0
+
+            .elseif (wParam == VK_LEFT) ; a
+                mov keydown, TRUE
+                mov direction, 2
+
+            .elseif (wParam == VK_RIGHT) ; d
+                mov keydown, TRUE
+                mov direction, 3
+            .endif
+
+            .if direction != -1
+                invoke changePlayerSpeed, ADDR player2, direction, keydown
                 mov direction, -1
                 mov keydown, -1
             .endif
