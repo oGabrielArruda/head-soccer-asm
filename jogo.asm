@@ -211,7 +211,12 @@ start:
         mov eax, [ecx].pos.x
         mov ebx, [ecx].speed.x
         add eax, ebx
-        mov [ecx].pos.x, eax
+        
+
+        ;  se o player está dentro dos limites da tela, alteramos sua posicao
+        .if eax > 0 && eax < 890
+            mov [ecx].pos.x, eax
+        .endif
 
         ; Y AXIS ______________
         mov eax, [ecx].pos.y
