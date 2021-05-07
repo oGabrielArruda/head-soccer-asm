@@ -18,6 +18,7 @@
 .const
     background equ 100
     p1 equ 101
+    ball_image equ 102
     CREF_TRANSPARENT  EQU 0FF00FFh
   	CREF_TRANSPARENT2 EQU 0FF0000h
     PLAYER_SPEED  EQU  6
@@ -31,6 +32,7 @@
 
     hBmp          dd    0
     p1_spritesheet    dd 0
+    ballBmp          dd 0
     paintstruct   PAINTSTRUCT <>
     GAMESTATE             BYTE 2
 
@@ -40,7 +42,6 @@
     hWnd HWND ?
     thread1ID DWORD ?
     thread2ID DWORD ?
-    threadJUMP DWORD ?
     
 ; _______________________________________________CODE______________________________________________
 .code
@@ -49,15 +50,20 @@ start:
     invoke GetModuleHandle, NULL ; provides the instance handle
     mov    hInstance, eax
 
+    ; Carregando Imagens _________________________
     invoke LoadBitmap, hInstance, background
     mov    hBmp, eax
 
     invoke LoadBitmap, hInstance, p1
     mov     p1_spritesheet, eax
 
+    invoke LoadBitmap, hInstance, ball_image
+    mov     ballBmp, eax
+
+    ;_____________________________________________
+
     invoke WinMain,hInstance,NULL,CommandLine,SW_SHOWDEFAULT    
-    invoke ExitProcess,eax   
-    ; comentario do sergio -> coloco aqui o procedimento WinMain para criação da janela em si
+    invoke ExitProcess,eax     
 
     ; PROCEDURES________________________________
 
@@ -130,6 +136,28 @@ start:
             PLAYER_SIZE, PLAYER_SIZE, _hMemDC2,\
             edx, ecx, PLAYER_SIZE, PLAYER_SIZE, 16777215
 
+        ; ____________________________________________________________________________________________________
+        ; ----------------------------------       BOLA     --------------------------------------------------
+        ; ____________________________________________________________________________________________________
+
+        invoke SelectObject, _hMemDC2, ballBmp
+
+        movsx eax, player2.direction
+        mov ebx, BALL_SIZE
+        mul ebx
+        mov ecx, eax
+
+        mov edx, 0
+
+        mov eax, ball.ballObj.pos.x
+        mov ebx, ball.ballObj.pos.y
+        sub eax, BALL_HALF_SIZE
+        sub ebx, BALL_HALF_SIZE
+
+        invoke TransparentBlt, _hMemDC, eax, ebx,\
+            BALL_SIZE, BALL_SIZE, _hMemDC2,\
+            edx, ecx, BALL_SIZE, BALL_SIZE, 16777215
+
         ret
     paintPlayers endp
 
@@ -170,7 +198,6 @@ start:
         .endw
         ret
     paintThread endp   
-
 
     changePlayerSpeed proc uses eax addrPlayer : DWORD, direction : BYTE, keydown : BYTE
         assume eax: ptr player
@@ -258,6 +285,32 @@ start:
         ret
     movePlayer endp
 
+    moveBall proc uses eax addrBall:dword
+        assume edx:ptr ballStruct
+        mov edx, addrBall
+
+        ; Y AXIS ______________
+
+        .if [edx].ballObj.pos.y < 420       ; se o player está pulando
+            mov ebx, [edx].ballObj.speed.y
+            inc ebx
+            mov [edx].ballObj.speed.y, ebx
+        .endif
+
+        mov eax, [edx].ballObj.pos.y
+        mov ebx, [edx].ballObj.speed.y
+        add ax, bx
+
+        .if eax >= 420
+            mov eax, 420         ; o colocamos no chão
+        .endif
+
+        mov [edx].ballObj.pos.y, eax
+
+        assume ecx:nothing
+        ret 
+    moveBall endp
+
     gameManager proc p:dword
         LOCAL area:RECT
 
@@ -266,6 +319,7 @@ start:
                 invoke Sleep, 30
                 invoke movePlayer, addr player1
                 invoke movePlayer, addr player2
+                invoke moveBall, addr ball
             .endw
 
         jmp game
@@ -275,6 +329,7 @@ start:
         
     ;______________________________________________________________________________
 
+    ; comentario do sergio -> coloco aqui o procedimento WinMain para criação da janela em si
 
     WinMain proc hInst     :DWORD,
                 hPrevInst :DWORD,
