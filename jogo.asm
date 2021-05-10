@@ -297,12 +297,13 @@ start:
             mov [edx].ballObj.speed.y, ebx
         .endif
 
+
         mov eax, [edx].ballObj.pos.y
         mov ebx, [edx].ballObj.speed.y
         add ax, bx
 
         .if eax >= 420
-            mov eax, 420         ; o colocamos no chão
+            mov eax, 430
         .endif
 
         mov [edx].ballObj.pos.y, eax

@@ -49,11 +49,12 @@ ballStruct struct
 ballStruct ends
 
 .const
-    PLAYER_SIZE      EQU 48
+    PLAYER_SIZE      EQU 70
     PLAYER_HALF_SIZE EQU PLAYER_SIZE / 2
 
     BALL_SIZE      EQU 30
     BALL_HALF_SIZE EQU BALL_SIZE / 2
+
 
     D_RIGHT       EQU 0 
     D_TOP         EQU 1  
@@ -67,4 +68,4 @@ ballStruct ends
 .data
     player1 player <<<100,420>,  <0,0>>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0>
     player2 player <<<700,420>,  <0,0>>, 0, 0, 4, D_LEFT, 0, 0, 0, 0>
-    ball ballStruct <<<400,100>,  <0,0>>>
+    ball ballStruct <<<420,100>,  <0,0>>>
