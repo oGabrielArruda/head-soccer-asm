@@ -49,10 +49,10 @@ ballStruct struct
 ballStruct ends
 
 .const
-    PLAYER_SIZE      EQU 70
+    PLAYER_SIZE      EQU 85
     PLAYER_HALF_SIZE EQU PLAYER_SIZE / 2
 
-    BALL_SIZE      EQU 30
+    BALL_SIZE      EQU 45
     BALL_HALF_SIZE EQU BALL_SIZE / 2
 
 

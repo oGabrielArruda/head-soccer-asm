@@ -286,28 +286,46 @@ start:
     movePlayer endp
 
     moveBall proc uses eax addrBall:dword
-        assume edx:ptr ballStruct
-        mov edx, addrBall
+        assume ebx:ptr ballStruct
+        mov ebx, addrBall
 
         ; Y AXIS ______________
 
-        .if [edx].ballObj.pos.y < 420       ; se o player está pulando
-            mov ebx, [edx].ballObj.speed.y
-            inc ebx
-            mov [edx].ballObj.speed.y, ebx
+        .if [ebx].ballObj.pos.y < 437       ; se a bola está no ar, a puxamos (gravidade)
+            mov ecx, [ebx].ballObj.speed.y
+            inc ecx
+            mov [ebx].ballObj.speed.y, ecx
         .endif
 
+        .if [ebx].ballObj.pos.y >= 437                      ; se a bola bateu no chão, vamos fazer quicar
+            .if [ebx].ballObj.speed.y < 20                   ; se a bola já  está em uma velocidade baixa, a deixamos no chao
+                mov [ebx].ballObj.speed.y, 0
+                mov [ebx].ballObj.pos.y, 437                
+            .else
+                ;mov edx, 0
+                ;mov eax, [ebx].ballObj.speed.y
+                ;mov ecx, 2
+                ;div ecx
+                ;neg eax
 
-        mov eax, [edx].ballObj.pos.y
-        mov ebx, [edx].ballObj.speed.y
-        add ax, bx
+                mov eax, [ebx].ballObj.speed.y              ; invertemos a velocidade da bola
+                dec eax                                     ; fazendo com que ela suba
+                dec eax
+                dec eax
+                neg eax
 
-        .if eax >= 420
-            mov eax, 430
+
+                mov [ebx].ballObj.speed.y, eax
+            .endif        
         .endif
+    
+        ; incrementase a speed no eax
+        mov eax, [ebx].ballObj.pos.y
+        mov ecx, [ebx].ballObj.speed.y
+        add ax, cx
 
-        mov [edx].ballObj.pos.y, eax
 
+        mov [ebx].ballObj.pos.y, eax
         assume ecx:nothing
         ret 
     moveBall endp
