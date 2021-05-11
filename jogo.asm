@@ -312,6 +312,7 @@ start:
 
             mov [ebx].ballObj.speed.y, eax     
         .endif
+
     
         ; incrementase a speed no eax
         mov eax, [ebx].ballObj.pos.y
@@ -322,8 +323,19 @@ start:
             mov eax, 437
         .endif
 
+        ; incrementamos a speed X
+        mov edx, [ebx].ballObj.pos.x
+        mov ecx, [ebx].ballObj.speed.x
+        add dx, cx
+
+
+        ; se a bola estiver nos limites da tela, a movemos
+        .if edx > 30 && edx < 870
+            mov [ebx].ballObj.pos.x, edx
+        .endif
 
         mov [ebx].ballObj.pos.y, eax
+        
         assume ecx:nothing
         ret 
     moveBall endp
@@ -429,16 +441,56 @@ start:
                 mov player2.jumping, 0
                 mov player2.playerObj.speed.y, 0 
             .endif                   
-        .endif
-
-        ;invoke collide, player1.playerObj.pos, ball.ballObj.pos, player1.sizePoint, ball.sizePoint
-        ;.if edx == TRUE  && ecx == TRUE                      ; se colidiu  
-            ;mov ball.ballObj.speed.y, -10
-            ;mov ball.ballObj.speed.x, 10         
-        ;.endif
+        .endif        
 
         ret
     verifyColliding endp
+
+    ballColliding proc
+    
+    invoke collide, player1.playerObj.pos, ball.ballObj.pos, player1.sizePoint, ball.sizePoint
+        .if edx == TRUE  && ecx == TRUE                      ; se colidiu  
+            mov eax, player1.playerObj.speed.x
+
+            .if eax == 0
+                mov eax, ball.ballObj.speed.x
+                neg eax
+            .else
+                add eax, ball.ballObj.speed.x
+                dec eax
+                dec eax
+                dec eax
+
+            .endif
+            
+
+
+            mov ball.ballObj.speed.y, -10
+            mov ball.ballObj.speed.x, eax       
+        .endif
+
+    invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
+        .if edx == TRUE  && ecx == TRUE                      ; se colidiu  
+            mov eax, player2.playerObj.speed.x
+
+            .if eax == 0
+                mov eax, ball.ballObj.speed.x
+                neg eax
+            .else
+                add eax, ball.ballObj.speed.x
+                dec eax
+                dec eax
+                dec eax
+
+            .endif
+
+            mov ball.ballObj.speed.y, -10
+            mov ball.ballObj.speed.x, eax          
+        .endif    
+
+
+    ret
+    ballColliding endp
 
     gameManager proc p:dword
         LOCAL area:RECT
@@ -446,9 +498,11 @@ start:
         game:
             .while GAMESTATE == 2
                 invoke Sleep, 30
-                invoke verifyColliding
+                ;invoke verifyColliding                
                 invoke movePlayer, addr player1
                 invoke movePlayer, addr player2
+
+                invoke ballColliding
                 invoke moveBall, addr ball
             .endw
 
@@ -633,6 +687,13 @@ start:
             .elseif (wParam == 44h) ; d
                 mov keydown, TRUE
                 mov direction, 3
+
+            .elseif (wParam == 51h)
+                mov ball.ballObj.speed.x, 0
+                mov ball.ballObj.speed.y, 0
+                mov ball.ballObj.pos.x, 420
+                mov ball.ballObj.pos.y, 100
+
             .endif
 
             .if direction != -1
