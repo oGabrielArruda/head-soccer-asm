@@ -297,32 +297,30 @@ start:
             mov [ebx].ballObj.speed.y, ecx
         .endif
 
-        .if [ebx].ballObj.pos.y >= 437                      ; se a bola bateu no chão, vamos fazer quicar
-            .if [ebx].ballObj.speed.y < 20                   ; se a bola já  está em uma velocidade baixa, a deixamos no chao
-                mov [ebx].ballObj.speed.y, 0
-                mov [ebx].ballObj.pos.y, 437                
-            .else
-                ;mov edx, 0
-                ;mov eax, [ebx].ballObj.speed.y
-                ;mov ecx, 2
-                ;div ecx
-                ;neg eax
+        .if [ebx].ballObj.pos.y >= 437                      ; se a bola bateu no chão, vamos fazer quicar          
+            ;mov edx, 0
+            ;mov eax, [ebx].ballObj.speed.y
+            ;mov ecx, 2
+            ;div ecx
+            ;neg eax
 
-                mov eax, [ebx].ballObj.speed.y              ; invertemos a velocidade da bola
-                dec eax                                     ; fazendo com que ela suba
-                dec eax
-                dec eax
-                neg eax
+            mov eax, [ebx].ballObj.speed.y              ; invertemos a velocidade da bola
+            dec eax                                     ; fazendo com que ela suba
+            dec eax
+            dec eax
+            neg eax
 
-
-                mov [ebx].ballObj.speed.y, eax
-            .endif        
+            mov [ebx].ballObj.speed.y, eax     
         .endif
     
         ; incrementase a speed no eax
         mov eax, [ebx].ballObj.pos.y
         mov ecx, [ebx].ballObj.speed.y
         add ax, cx
+
+        .if eax > 437
+            mov eax, 437
+        .endif
 
 
         mov [ebx].ballObj.pos.y, eax
