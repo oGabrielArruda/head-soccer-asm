@@ -14,7 +14,7 @@
             Name db Text,0
         lbl:
     ENDM
-     
+
 .const
     background equ 100
     p1 equ 101
@@ -249,7 +249,7 @@ start:
 
 
 
-        .if [ecx].pos.y < 420       ; se o player está pulando
+        .if [edx].jumping == TRUE  ; se o player está pulando
             mov ebx, [ecx].speed.y
             inc ebx
             mov [ecx].speed.y, ebx
@@ -344,9 +344,32 @@ start:
             add ebx, obj2Size.x                    ; pos2 - tamanho
             .if eax < ebx
                 mov edx, TRUE
+            .else
+                mov edx, FALSE
             .endif
         .else
             mov edx, FALSE
+        .endif
+
+        mov eax, obj1Pos.y
+        add eax, obj1Size.y                    ; pos1 + tamanho
+
+        mov ebx, obj2Pos.y
+        sub ebx, obj2Size.y                    ; pos2 - tamanho
+
+        .if eax > ebx
+            mov eax, obj1Pos.y
+            sub eax, obj1Size.y                    ; pos1 + tamanho
+
+            mov ebx, obj2Pos.y
+            add ebx, obj2Size.y                    ; pos2 - tamanho
+            .if eax < ebx
+                mov ecx, TRUE
+            .else
+                mov ecx, FALSE
+            .endif
+        .else
+            mov ecx, FALSE
         .endif
 
         pop ebx
@@ -359,31 +382,60 @@ start:
 
         ; Verfica a colisão dos dois players
         invoke collide, player1.playerObj.pos, player2.playerObj.pos, player1.sizePoint, player2.sizePoint
-        .if edx == TRUE                                      ; se colidiu  
+        .if edx == TRUE && ecx == TRUE                      ; se colidiu  
             ;                       PLAYER 1
             mov eax, player1.playerObj.pos.x
             mov ebx, player1.playerObj.speed.x
             add eax, ebx
 
-            mov ebx, player2.playerObj.pos.x
-            sub ebx, player2.sizePoint.x                    ; pos2 - tamanho
-            .if ebx < eax                                   ; verifica se o prox mov é válido
-                mov player1.playerObj.speed.y, 0 
-                mov player1.playerObj.speed.x, 0 
-            .endif 
+            mov auxiliar_point.x, eax
 
+            mov eax, player1.playerObj.pos.y
+            mov ebx, player1.playerObj.speed.y
+            add eax, ebx
+
+            mov auxiliar_point.y, eax
+
+            invoke collide, auxiliar_point, player2.playerObj.pos, player1.sizePoint, player2.sizePoint
+            .if edx == TRUE                               ; verifica se o prox mov é válido
+                mov player1.playerObj.speed.x, 0 
+            .endif
+            .if ecx == TRUE                               ; verifica se o prox mov é válido
+                mov player1.jumping, 0
+                mov player1.playerObj.speed.y, 0 
+            .endif                   
+        .endif
+
+        invoke collide, player2.playerObj.pos, player1.playerObj.pos, player2.sizePoint, player1.sizePoint
+        .if edx == TRUE && ecx == TRUE                      ; se colidiu  
             ;                       PLAYER 2
             mov eax, player2.playerObj.pos.x
             mov ebx, player2.playerObj.speed.x
             add eax, ebx
 
-            mov ebx, player1.playerObj.pos.x
-            add ebx, player1.sizePoint.x                    ; pos2 - tamanho
-            .if ebx > eax 
+            mov auxiliar_point.x, eax
+
+            mov eax, player2.playerObj.pos.y
+            mov ebx, player2.playerObj.speed.y
+            add eax, ebx
+
+            mov auxiliar_point.y, eax
+
+            invoke collide, auxiliar_point, player1.playerObj.pos, player2.sizePoint, player1.sizePoint
+            .if edx == TRUE                               ; verifica se o prox mov é válido
+                mov player2.playerObj.speed.x, 0 
+            .endif
+            .if ecx == TRUE                               ; verifica se o prox mov é válido
+                mov player2.jumping, 0
                 mov player2.playerObj.speed.y, 0 
-                mov player2.playerObj.speed.x, 0  
-            .endif                
+            .endif                   
         .endif
+
+        ;invoke collide, player1.playerObj.pos, ball.ballObj.pos, player1.sizePoint, ball.sizePoint
+        ;.if edx == TRUE  && ecx == TRUE                      ; se colidiu  
+            ;mov ball.ballObj.speed.y, -10
+            ;mov ball.ballObj.speed.x, 10         
+        ;.endif
 
         ret
     verifyColliding endp

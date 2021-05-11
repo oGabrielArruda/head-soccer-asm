@@ -46,7 +46,8 @@ player struct
 player ends
 
 ballStruct struct
-    ballObj       gameObject <>
+    ballObj               gameObject <>
+    sizePoint             point <>
 ballStruct ends
 
 .const
@@ -70,3 +71,4 @@ ballStruct ends
     player1 player <<<100,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0>
     player2 player <<<700,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_LEFT, 0, 0, 0, 0>
     ball ballStruct <<<420,100>,  <0,0>>>
+    auxiliar_point point <0, 0>
