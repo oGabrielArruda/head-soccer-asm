@@ -328,12 +328,66 @@ start:
         ret 
     moveBall endp
 
+    collide proc obj1Pos:point, obj2Pos:point, obj1Size:point, obj2Size:point
+        
+        mov eax, obj1Pos.x
+        add eax, obj1Size.x                    ; pos1 + tamanho
+
+        mov ebx, obj2Pos.x
+        sub ebx, obj2Size.x                    ; pos2 - tamanho
+
+        .if eax > ebx
+            mov eax, obj1Pos.x
+            sub eax, obj1Size.x                    ; pos1 + tamanho
+
+            mov ebx, obj2Pos.x
+            add ebx, obj2Size.x                    ; pos2 - tamanho
+            .if eax < ebx
+                mov edx, TRUE
+            .endif
+        .else
+            mov edx, FALSE
+        .endif
+
+        pop ebx
+        pop eax
+
+        ret
+    collide endp
+
     gameManager proc p:dword
         LOCAL area:RECT
 
         game:
             .while GAMESTATE == 2
                 invoke Sleep, 30
+                invoke collide, player1.playerObj.pos, player2.playerObj.pos, player1.sizePoint, player2.sizePoint
+                .if edx == TRUE                                      ; se colidiu  
+
+                    ;                       PLAYER 1
+                    mov eax, player1.playerObj.pos.x
+                    mov ebx, player1.playerObj.speed.x
+                    add eax, ebx
+
+                    mov ebx, player2.playerObj.pos.x
+                    sub ebx, player2.sizePoint.x                    ; pos2 - tamanho
+                    .if ebx < eax                                   ; verifica se o prox mov é válido
+                        mov player1.playerObj.speed.y, 0 
+                        mov player1.playerObj.speed.x, 0 
+                    .endif 
+
+                    ;                       PLAYER 2
+                    mov eax, player2.playerObj.pos.x
+                    mov ebx, player2.playerObj.speed.x
+                    add eax, ebx
+
+                    mov ebx, player1.playerObj.pos.x
+                    add ebx, player1.sizePoint.x                    ; pos2 - tamanho
+                    .if ebx > eax 
+                        mov player2.playerObj.speed.y, 0 
+                        mov player2.playerObj.speed.x, 0  
+                    .endif                
+                .endif
                 invoke movePlayer, addr player1
                 invoke movePlayer, addr player2
                 invoke moveBall, addr ball

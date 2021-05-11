@@ -32,7 +32,8 @@ gameObject struct
 gameObject ends
 
 player struct
-    playerObj       gameObject <>
+    playerObj             gameObject <>
+    sizePoint             point <>
     stopped               BYTE 0
     jumping               BYTE 0
     cooldownDash          BYTE 0
@@ -66,6 +67,6 @@ ballStruct ends
     D_TOP_RIGHT   EQU 7
 
 .data
-    player1 player <<<100,420>,  <0,0>>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0>
-    player2 player <<<700,420>,  <0,0>>, 0, 0, 4, D_LEFT, 0, 0, 0, 0>
+    player1 player <<<100,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0>
+    player2 player <<<700,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_LEFT, 0, 0, 0, 0>
     ball ballStruct <<<420,100>,  <0,0>>>
