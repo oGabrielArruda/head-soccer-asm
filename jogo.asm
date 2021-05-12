@@ -36,6 +36,25 @@
     paintstruct   PAINTSTRUCT <>
     GAMESTATE             BYTE 2
 
+    ; Música
+    ponte      db "sounds/ponte.mp3",0
+    ponte_especial      db "sounds/ponte_especial.mp3",0
+
+    ; - MCI_OPEN_PARMS Structure ( API=mciSendCommand ) -
+		open_dwCallback     dd ?
+		open_wDeviceID     dd ?
+		open_lpstrDeviceType  dd ?
+		open_lpstrElementName  dd ?
+		open_lpstrAlias     dd ?
+
+		; - MCI_GENERIC_PARMS Structure ( API=mciSendCommand ) -
+		generic_dwCallback   dd ?
+
+		; - MCI_PLAY_PARMS Structure ( API=mciSendCommand ) -
+		play_dwCallback     dd ?
+		play_dwFrom       dd ?
+		play_dwTo        dd ?    
+
 .data?
     hInstance HINSTANCE ?
 
@@ -328,7 +347,6 @@ start:
         mov ecx, [ebx].ballObj.speed.x
         add dx, cx
 
-
         ; se a bola estiver nos limites da tela, a movemos
         .if edx > 30 && edx < 870
             mov [ebx].ballObj.pos.x, edx
@@ -481,7 +499,7 @@ start:
                 dec eax
                 neg eax
             .else
-                add eax, player1.playerObj.speed.x
+                add eax, player2.playerObj.speed.x
                 dec eax
                 dec eax
                 dec eax
@@ -616,6 +634,18 @@ start:
             mov eax, offset paintThread 
             invoke CreateThread, NULL, NULL, eax, 0, 0, addr thread2ID 
             invoke CloseHandle, eax 
+
+            ; Música
+            mov   open_lpstrDeviceType, 0h         ;fill MCI_OPEN_PARMS structure
+            mov   open_lpstrElementName,OFFSET ponte
+            invoke mciSendCommandA,0,MCI_OPEN, MCI_OPEN_ELEMENT,offset open_dwCallback 
+            cmp   eax,0h                 	
+            je    next		
+            next:	
+                invoke mciSendCommandA,open_wDeviceID,MCI_PLAY,MCI_NOTIFY,offset play_dwCallback			
+
+
+    
 
         .elseif uMsg == WM_PAINT
             invoke screenUpdate
