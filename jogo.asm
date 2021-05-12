@@ -448,15 +448,17 @@ start:
 
     ballColliding proc
     
-    invoke collide, player1.playerObj.pos, ball.ballObj.pos, player1.sizePoint, ball.sizePoint
+        invoke collide, player1.playerObj.pos, ball.ballObj.pos, player1.sizePoint, ball.sizePoint
         .if edx == TRUE  && ecx == TRUE                      ; se colidiu  
             mov eax, player1.playerObj.speed.x
 
             .if eax == 0
                 mov eax, ball.ballObj.speed.x
+                dec eax
+                dec eax
                 neg eax
             .else
-                add eax, ball.ballObj.speed.x
+                add eax, player1.playerObj.speed.x
                 dec eax
                 dec eax
                 dec eax
@@ -469,15 +471,17 @@ start:
             mov ball.ballObj.speed.x, eax       
         .endif
 
-    invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
+        invoke collide, player2.playerObj.pos, ball.ballObj.pos, player2.sizePoint, ball.sizePoint
         .if edx == TRUE  && ecx == TRUE                      ; se colidiu  
             mov eax, player2.playerObj.speed.x
 
             .if eax == 0
                 mov eax, ball.ballObj.speed.x
+                dec eax
+                dec eax
                 neg eax
             .else
-                add eax, ball.ballObj.speed.x
+                add eax, player1.playerObj.speed.x
                 dec eax
                 dec eax
                 dec eax
@@ -488,8 +492,7 @@ start:
             mov ball.ballObj.speed.x, eax          
         .endif    
 
-
-    ret
+        ret
     ballColliding endp
 
     gameManager proc p:dword
@@ -501,7 +504,6 @@ start:
                 ;invoke verifyColliding                
                 invoke movePlayer, addr player1
                 invoke movePlayer, addr player2
-
                 invoke ballColliding
                 invoke moveBall, addr ball
             .endw
