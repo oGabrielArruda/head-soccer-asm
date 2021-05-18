@@ -96,14 +96,36 @@ start:
 
         ret
     isStopped endp
-
+; _____________________________________________________________________________________________________
     paintBackground proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
+        LOCAL rect   :RECT
     
+
+        ; paint background image
         invoke SelectObject, _hMemDC2, hBmp
         invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY
 
+
+        ; paint score
+        ;invoke SetBkMode, _hMemDC, TRANSPARENT
+        invoke SetTextColor,_hMemDC,00FF8800h
+    
+        invoke wsprintf, addr buffer, chr$("%d     x     %d"), player1.goals, player2.goals
+        mov   rect.left, 360
+        mov   rect.top , 10
+        mov   rect.right, 490
+        mov   rect.bottom, 50  
+
+        invoke DrawText, _hMemDC, addr buffer, -1, \
+            addr rect, DT_CENTER or DT_VCENTER or DT_SINGLELINE
+        ;invoke ReleaseDC, hWin, _hMemDC
+
         ret
+
     paintBackground endp
+; _____________________________________________________________________________________________________
+
+; _____________________________________________________________________________________________________
 
     paintPlayers proc _hdc:HDC, _hMemDC:HDC, _hMemDC2:HDC
         ; ____________________________________________________________________________________________________
@@ -180,6 +202,8 @@ start:
         ret
     paintPlayers endp
 
+; _____________________________________________________________________________________________________
+
     screenUpdate proc
         LOCAL hMemDC:HDC
         LOCAL hMemDC2:HDC
@@ -210,6 +234,8 @@ start:
         ret
     screenUpdate endp
 
+; _____________________________________________________________________________________________________
+
     paintThread proc p:DWORD
         .WHILE GAMESTATE == 2
             invoke Sleep, 17 ; 60 FPS
@@ -217,6 +243,8 @@ start:
         .endw
         ret
     paintThread endp   
+
+; _____________________________________________________________________________________________________
 
     changePlayerSpeed proc uses eax addrPlayer : DWORD, direction : BYTE, keydown : BYTE
         assume eax: ptr player
@@ -258,6 +286,8 @@ start:
         assume ecx: nothing
         ret
     changePlayerSpeed endp
+
+; _____________________________________________________________________________________________________
 
     movePlayer proc uses eax addrPlayer:dword
         assume edx:ptr player
@@ -303,6 +333,8 @@ start:
         assume ecx:nothing
         ret
     movePlayer endp
+
+; _____________________________________________________________________________________________________
 
     moveBall proc uses eax addrBall:dword
         assume ebx:ptr ballStruct
@@ -350,7 +382,7 @@ start:
         ; se a bola estiver nos limites da tela, a movemos
         .if edx > 10 && edx < 885
             mov [ebx].ballObj.pos.x, edx
-        .else
+        .else                               ; se a bola bateu na parede, a rebatemos
             mov ecx, ball.ballObj.speed.x
             dec ecx
             dec ecx
@@ -358,11 +390,13 @@ start:
             mov [ebx].ballObj.speed.x, ecx 
         .endif
 
-        mov [ebx].ballObj.pos.y, eax
+        mov [ebx].ballObj.pos.y, eax        ; movemos o Y
         
         assume ecx:nothing
         ret 
     moveBall endp
+
+; _____________________________________________________________________________________________________
 
     collide proc obj1Pos:point, obj2Pos:point, obj1Size:point, obj2Size:point
         
@@ -413,6 +447,8 @@ start:
 
         ret
     collide endp
+
+; _____________________________________________________________________________________________________
 
     verifyColliding proc
 
@@ -470,6 +506,8 @@ start:
         ret
     verifyColliding endp
 
+; _____________________________________________________________________________________________________
+
     ballColliding proc
     
         invoke collide, player1.playerObj.pos, ball.ballObj.pos, player1.sizePoint, ball.sizePoint
@@ -489,7 +527,7 @@ start:
 
             .endif
 
-            mov ball.ballObj.speed.y, -15
+            mov ball.ballObj.speed.y, BALL_SPEED_Y
             mov ball.ballObj.speed.x, eax       
         .endif
 
@@ -517,6 +555,8 @@ start:
         ret
     ballColliding endp
 
+; _____________________________________________________________________________________________________
+
     resetBall proc
         mov ball.ballObj.speed.x, 0
         mov ball.ballObj.speed.y, 0
@@ -525,22 +565,28 @@ start:
         ret
     resetBall endp
 
+; _____________________________________________________________________________________________________
+
     verifyGoal proc uses eax addrBall:dword
         assume ebx:ptr ballStruct
         mov ebx, addrBall
         
-        mov eax, [ebx].ballObj.pos.x 
+        mov eax, [ebx].ballObj.pos.x   ; salvamos a posição da bola
         mov ecx, [ebx].ballObj.pos.y 
 
-        .if eax > gol2.top.x && ecx > gol2.top.y
+        .if eax > gol2.top.x && ecx > gol2.top.y    ; GOL PLAYER 1
+            add player1.goals, 1
             invoke resetBall
         .elseif eax < gol1.top.x && ecx > gol1.top.y ; GOL PLAYER 2
+            add player2.goals, 1
             invoke resetBall
         .endif
         
         assume ecx:nothing
         ret 
     verifyGoal endp
+
+; _____________________________________________________________________________________________________
 
     gameManager proc p:dword
         LOCAL area:RECT

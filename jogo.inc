@@ -43,6 +43,7 @@ player struct
     walksequence          BYTE 0
     dashanimationCD       BYTE 0 ; cooldown
     dashsequence          BYTE 0 
+    goals                 dd   0
 player ends
 
 ballStruct struct
@@ -64,6 +65,8 @@ golStruct ends
     BALL_HALF_SIZE EQU BALL_SIZE / 2
 
 
+    BALL_SPEED_Y EQU -17
+
     D_RIGHT       EQU 0 
     D_TOP         EQU 1  
     D_LEFT        EQU 2     
@@ -74,8 +77,8 @@ golStruct ends
     D_TOP_RIGHT   EQU 7
 
 .data
-    player1 player <<<100,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0>
-    player2 player <<<700,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_LEFT, 0, 0, 0, 0>
+    player1 player <<<100,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0, 0 >
+    player2 player <<<700,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_LEFT, 0, 0, 0, 0,0 >
     ball ballStruct <<<420,100>,  <0,0>>>
     gol1 golStruct <<30, 240>, <40, 440>>
     gol2 golStruct <<850, 240>, <840, 440>>
