@@ -348,8 +348,14 @@ start:
         add dx, cx
 
         ; se a bola estiver nos limites da tela, a movemos
-        .if edx > 30 && edx < 870
+        .if edx > 10 && edx < 885
             mov [ebx].ballObj.pos.x, edx
+        .else
+            mov ecx, ball.ballObj.speed.x
+            dec ecx
+            dec ecx
+            neg ecx
+            mov [ebx].ballObj.speed.x, ecx 
         .endif
 
         mov [ebx].ballObj.pos.y, eax
@@ -470,22 +476,20 @@ start:
         .if edx == TRUE  && ecx == TRUE                      ; se colidiu  
             mov eax, player1.playerObj.speed.x
 
-            .if eax == 0
-                mov eax, ball.ballObj.speed.x
+            .if eax == 0                                    ; se o player estiver parado
+                mov eax, ball.ballObj.speed.x               ; apenas "rebatemos" a bola
                 dec eax
                 dec eax
                 neg eax
-            .else
-                add eax, player1.playerObj.speed.x
+            .else                                           ; se o player estiver em movimento
+                add eax, player1.playerObj.speed.x          ; damos o chute de acordo com sua velocidade
                 dec eax
                 dec eax
                 dec eax
 
             .endif
-            
 
-
-            mov ball.ballObj.speed.y, -10
+            mov ball.ballObj.speed.y, -15
             mov ball.ballObj.speed.x, eax       
         .endif
 
@@ -508,10 +512,35 @@ start:
 
             mov ball.ballObj.speed.y, -10
             mov ball.ballObj.speed.x, eax          
-        .endif    
+        .endif     
 
         ret
     ballColliding endp
+
+    resetBall proc
+        mov ball.ballObj.speed.x, 0
+        mov ball.ballObj.speed.y, 0
+        mov ball.ballObj.pos.x, 420
+        mov ball.ballObj.pos.y, 100
+        ret
+    resetBall endp
+
+    verifyGoal proc uses eax addrBall:dword
+        assume ebx:ptr ballStruct
+        mov ebx, addrBall
+        
+        mov eax, [ebx].ballObj.pos.x 
+        mov ecx, [ebx].ballObj.pos.y 
+
+        .if eax > gol2.top.x && ecx > gol2.top.y
+            invoke resetBall
+        .elseif eax < gol1.top.x && ecx > gol1.top.y ; GOL PLAYER 2
+            invoke resetBall
+        .endif
+        
+        assume ecx:nothing
+        ret 
+    verifyGoal endp
 
     gameManager proc p:dword
         LOCAL area:RECT
@@ -524,6 +553,7 @@ start:
                 invoke movePlayer, addr player2
                 invoke ballColliding
                 invoke moveBall, addr ball
+                invoke verifyGoal, addr ball
             .endw
 
         jmp game

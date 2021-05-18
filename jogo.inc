@@ -50,6 +50,12 @@ ballStruct struct
     sizePoint             point <>
 ballStruct ends
 
+golStruct struct
+    top point <>
+    bottom point <>
+golStruct ends
+
+
 .const
     PLAYER_SIZE      EQU 85
     PLAYER_HALF_SIZE EQU PLAYER_SIZE / 2
@@ -71,4 +77,6 @@ ballStruct ends
     player1 player <<<100,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_RIGHT, 0, 0, 0, 0>
     player2 player <<<700,420>,  <0,0>>, <PLAYER_HALF_SIZE, PLAYER_HALF_SIZE>, 0, 0, 4, D_LEFT, 0, 0, 0, 0>
     ball ballStruct <<<420,100>,  <0,0>>>
+    gol1 golStruct <<30, 240>, <40, 440>>
+    gol2 golStruct <<850, 240>, <840, 440>>
     auxiliar_point point <0, 0>
