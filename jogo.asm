@@ -567,6 +567,19 @@ start:
 
 ; _____________________________________________________________________________________________________
 
+    resetPositions proc
+        mov player1.playerObj.pos.x, 100
+        mov player1.playerObj.pos.y, 420
+
+        mov player2.playerObj.pos.x, 700
+        mov player2.playerObj.pos.y, 420
+
+        invoke resetBall
+
+        ret
+    resetPositions endp
+; _____________________________________________________________________________________________________
+
     verifyGoal proc uses eax addrBall:dword
         assume ebx:ptr ballStruct
         mov ebx, addrBall
@@ -576,10 +589,10 @@ start:
 
         .if eax > gol2.top.x && ecx > gol2.top.y    ; GOL PLAYER 1
             add player1.goals, 1
-            invoke resetBall
+            invoke resetPositions
         .elseif eax < gol1.top.x && ecx > gol1.top.y ; GOL PLAYER 2
             add player2.goals, 1
-            invoke resetBall
+            invoke resetPositions
         .endif
         
         assume ecx:nothing
