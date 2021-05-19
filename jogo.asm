@@ -17,7 +17,8 @@
 
 .const
     background equ 100
-    p1 equ 101
+    p1 equ 1001
+    p2 equ 1002
     ball_image equ 102
     CREF_TRANSPARENT  EQU 0FF00FFh
   	CREF_TRANSPARENT2 EQU 0FF0000h
@@ -32,6 +33,7 @@
 
     hBmp          dd    0
     p1_spritesheet    dd 0
+    p2_spritesheet    dd 0
     ballBmp          dd 0
     paintstruct   PAINTSTRUCT <>
     GAMESTATE             BYTE 2
@@ -75,6 +77,9 @@ start:
 
     invoke LoadBitmap, hInstance, p1
     mov     p1_spritesheet, eax
+
+    invoke LoadBitmap, hInstance, p2
+    mov     p2_spritesheet, eax
 
     invoke LoadBitmap, hInstance, ball_image
     mov     ballBmp, eax
@@ -157,7 +162,7 @@ start:
         ; ____________________________________________________________________________________________________
 
 
-        invoke SelectObject, _hMemDC2, p1_spritesheet
+        invoke SelectObject, _hMemDC2, p2_spritesheet
 
         movsx eax, player2.direction
         mov ebx, PLAYER_SIZE
