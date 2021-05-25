@@ -17,6 +17,7 @@
 
 .const
     background equ 100
+    menu equ 101
     p1 equ 1001
     p2 equ 1002
     ball_image equ 102
@@ -32,11 +33,17 @@
     buffer        db 256 dup(?)
 
     hBmp          dd    0
+    menuBmp       dd    0
     p1_spritesheet    dd 0
     p2_spritesheet    dd 0
     ballBmp          dd 0
     paintstruct   PAINTSTRUCT <>
-    GAMESTATE             BYTE 2
+    GAMESTATE             BYTE 1
+    ; GAMESTATE
+    ; 1 - Menu
+    ; 2 - Jogo
+    ; 3 - Tela de vitoria player 1
+    ; 4 - Tela de vitoria player 2
 
     ; Música
     ponte      db "sounds/ponte.mp3",0
@@ -75,6 +82,9 @@ start:
     invoke LoadBitmap, hInstance, background
     mov    hBmp, eax
 
+    invoke LoadBitmap, hInstance, menu
+    mov    menuBmp, eax
+
     invoke LoadBitmap, hInstance, p1
     mov     p1_spritesheet, eax
 
@@ -107,23 +117,26 @@ start:
     
 
         ; paint background image
-        invoke SelectObject, _hMemDC2, hBmp
-        invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY
+        .if(GAMESTATE == 1)
+            invoke SelectObject, _hMemDC2, menuBmp
+        .elseif(GAMESTATE == 2)
+            invoke SelectObject, _hMemDC2, hBmp
 
+            ; paint score
+            ;invoke SetBkMode, _hMemDC, TRANSPARENT
+            invoke SetTextColor,_hMemDC,00FF8800h
+        
+            invoke wsprintf, addr buffer, chr$("%d     x     %d"), player1.goals, player2.goals
+            mov   rect.left, 360
+            mov   rect.top , 10
+            mov   rect.right, 490
+            mov   rect.bottom, 50  
 
-        ; paint score
-        ;invoke SetBkMode, _hMemDC, TRANSPARENT
-        invoke SetTextColor,_hMemDC,00FF8800h
-    
-        invoke wsprintf, addr buffer, chr$("%d     x     %d"), player1.goals, player2.goals
-        mov   rect.left, 360
-        mov   rect.top , 10
-        mov   rect.right, 490
-        mov   rect.bottom, 50  
-
-        invoke DrawText, _hMemDC, addr buffer, -1, \
-            addr rect, DT_CENTER or DT_VCENTER or DT_SINGLELINE
-        ;invoke ReleaseDC, hWin, _hMemDC
+            invoke DrawText, _hMemDC, addr buffer, -1, \
+                addr rect, DT_CENTER or DT_VCENTER or DT_SINGLELINE
+            ;invoke ReleaseDC, hWin, _hMemDC
+        .endif
+        invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY     
 
         ret
 
@@ -227,9 +240,9 @@ start:
         invoke SelectObject, hMemDC, hBitmap
 
         invoke paintBackground, hDC, hMemDC, hMemDC2
-
-        invoke paintPlayers, hDC, hMemDC, hMemDC2
-
+        .if(GAMESTATE == 2)
+            invoke paintPlayers, hDC, hMemDC, hMemDC2
+        .endif
         invoke BitBlt, hDC, 0, 0, 910, 522, hMemDC, 0, 0, SRCCOPY
 
         invoke DeleteDC, hMemDC
@@ -242,7 +255,7 @@ start:
 ; _____________________________________________________________________________________________________
 
     paintThread proc p:DWORD
-        .WHILE GAMESTATE == 2
+        .WHILE GAMESTATE != 5
             invoke Sleep, 17 ; 60 FPS
             invoke InvalidateRect, hWnd, NULL, FALSE
         .endw
@@ -717,7 +730,6 @@ start:
         mov direction, -1
         mov keydown, -1
 
-        
     
         ; quando esta criando
         .if uMsg == WM_CREATE
@@ -738,14 +750,21 @@ start:
             next:	
                 invoke mciSendCommandA,open_wDeviceID,MCI_PLAY,MCI_NOTIFY,offset play_dwCallback			
 
-
-    
-
         .elseif uMsg == WM_PAINT
             invoke screenUpdate
 
         .elseif uMsg == WM_DESTROY                                        ; if the user closes our window 
             invoke PostQuitMessage,NULL                                   ; quit our application 
+
+        ; game manager
+        .elseif uMsg == WM_CHAR
+            .if (wParam == 13) ; [ENTER]
+                .if GAMESTATE == 1
+                    mov GAMESTATE, 2
+                .elseif GAMESTATE == 2
+                    mov GAMESTATE, 1
+                .endif
+            .endif
 
         ; Quando a tecla sobe
         .elseif uMsg == WM_KEYUP
@@ -795,7 +814,7 @@ start:
                 mov direction, -1
                 mov keydown, -1
             .endif            
-            
+           
         ;quando a tecla desce
         .elseif uMsg == WM_KEYDOWN
             ; ____________________________________________________________________________________________________
