@@ -18,6 +18,8 @@
 .const
     background equ 100
     menu equ 101
+    vitoria_1 equ 103
+    vitoria_2 equ 104
     p1 equ 1001
     p2 equ 1002
     ball_image equ 102
@@ -34,6 +36,8 @@
 
     hBmp          dd    0
     menuBmp       dd    0
+    vitoria1Bmp       dd    0
+    vitoria2Bmp       dd    0
     p1_spritesheet    dd 0
     p2_spritesheet    dd 0
     ballBmp          dd 0
@@ -47,7 +51,7 @@
 
     ; Música
     ponte      db "sounds/ponte.mp3",0
-    ponte_especial      db "sounds/ponte_especial.mp3",0
+    gol      db "sounds/gol.mp3",0
 
     ; - MCI_OPEN_PARMS Structure ( API=mciSendCommand ) -
 		open_dwCallback     dd ?
@@ -85,6 +89,12 @@ start:
     invoke LoadBitmap, hInstance, menu
     mov    menuBmp, eax
 
+    invoke LoadBitmap, hInstance, vitoria_1
+    mov    vitoria1Bmp, eax
+
+    invoke LoadBitmap, hInstance, vitoria_2
+    mov    vitoria2Bmp, eax
+
     invoke LoadBitmap, hInstance, p1
     mov     p1_spritesheet, eax
 
@@ -121,8 +131,16 @@ start:
             invoke SelectObject, _hMemDC2, menuBmp
         .elseif(GAMESTATE == 2)
             invoke SelectObject, _hMemDC2, hBmp
+        .elseif(GAMESTATE == 3)
+            invoke SelectObject, _hMemDC2, vitoria1Bmp
+        .elseif(GAMESTATE == 4)
+            invoke SelectObject, _hMemDC2, vitoria2Bmp
+        .endif
 
-            ; paint score
+        invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY     
+
+        .if(GAMESTATE == 2)
+        ; paint score
             ;invoke SetBkMode, _hMemDC, TRANSPARENT
             invoke SetTextColor,_hMemDC,00FF8800h
         
@@ -136,7 +154,6 @@ start:
                 addr rect, DT_CENTER or DT_VCENTER or DT_SINGLELINE
             ;invoke ReleaseDC, hWin, _hMemDC
         .endif
-        invoke BitBlt, _hMemDC, 0, 0, 910, 522, _hMemDC2, 0, 0, SRCCOPY     
 
         ret
 
@@ -605,14 +622,28 @@ start:
         mov eax, [ebx].ballObj.pos.x   ; salvamos a posição da bola
         mov ecx, [ebx].ballObj.pos.y 
 
+        mov edx, 0
         .if eax > gol2.top.x && ecx > gol2.top.y    ; GOL PLAYER 1
             add player1.goals, 1
             invoke resetPositions
+            mov edx, 1
         .elseif eax < gol1.top.x && ecx > gol1.top.y ; GOL PLAYER 2
             add player2.goals, 1
             invoke resetPositions
+            mov edx, 1
         .endif
         
+        .if edx == 1
+             ; Música
+            mov   open_lpstrDeviceType, 0h         ;fill MCI_OPEN_PARMS structure
+            mov   open_lpstrElementName,OFFSET gol
+            invoke mciSendCommandA,0,MCI_OPEN, MCI_OPEN_ELEMENT,offset open_dwCallback 
+            cmp   edx,0h                 	
+            je    next		
+            next:	
+                invoke mciSendCommandA,open_wDeviceID,MCI_PLAY,MCI_NOTIFY,offset play_dwCallback	
+        .endif
+
         assume ecx:nothing
         ret 
     verifyGoal endp
@@ -631,6 +662,12 @@ start:
                 invoke ballColliding
                 invoke moveBall, addr ball
                 invoke verifyGoal, addr ball
+
+                .if (player1.goals ==2)
+                    mov GAMESTATE, 3
+                .elseif (player2.goals == 2)
+                    mov GAMESTATE, 4
+                .endif
             .endw
 
         jmp game
