@@ -663,9 +663,9 @@ start:
                 invoke moveBall, addr ball
                 invoke verifyGoal, addr ball
 
-                .if (player1.goals ==2)
+                .if (player1.goals == MAX_GOALS)
                     mov GAMESTATE, 3
-                .elseif (player2.goals == 2)
+                .elseif (player2.goals == MAX_GOALS)
                     mov GAMESTATE, 4
                 .endif
             .endw
@@ -800,7 +800,13 @@ start:
                     mov GAMESTATE, 2
                 .elseif GAMESTATE == 2
                     mov GAMESTATE, 1
-                .endif
+                .elseif GAMESTATE == 3 || GAMESTATE == 4
+                    invoke resetPositions
+                    invoke resetBall
+                    mov player1.goals, 0
+                    mov player2.goals, 0
+                    mov GAMESTATE, 2
+                .endif                
             .endif
 
         ; Quando a tecla sobe
